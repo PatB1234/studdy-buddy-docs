@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+        <title>Backend - StuddyBuddy Docs</title>
+        <link href="../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../css/brands.min.css" rel="stylesheet">
+        <link href="../../css/solid.min.css" rel="stylesheet">
+        <link href="../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../..">StuddyBuddy Docs</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../.." class="nav-link">Welcome to StuddyBuddy</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href="../../Introduction/" class="nav-link">Introduction</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a href="#" class="nav-link dropdown-toggle active" aria-current="page" role="button" data-bs-toggle="dropdown"  aria-expanded="false">Developer Talk</a>
+                                <ul class="dropdown-menu">
+                                    
+<li>
+    <a href="./" class="dropdown-item active" aria-current="page">Backend</a>
+</li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                            <li class="nav-item">
+                                <a rel="prev" href="../../Introduction/" class="nav-link">
+                                    <i class="fa fa-arrow-left"></i> Previous
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a rel="next" class="nav-link disabled">
+                                    Next <i class="fa fa-arrow-right"></i>
+                                </a>
+                            </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#data-structures" class="nav-link">Data Structures</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#encryption" class="nav-link">Encryption</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<p>The backend is built using <a href="https://www.python.org/downloads/release/python-3122/">Python 3.12.2</a>. This is not the latest release at the time, however I found it to be the most stable. I realised that newer version often have stability issues that cause them to crash or have problems that result in some core functionality not working as intended. To avoid this hassle, I chose a version that I have worked with before, as it would have support for all the packages required whilst also remaining stable, ensuring app &amp; user quality.</p>
+<p>The backend stores data in a typical SQL-based database. For python, we used <a href="https://docs.python.org/3/library/sqlite3.html">sqlite3</a>. This is a lightweight, high-speed and efficient database built for small-medium scale applications such as ours. As I am paying for the server out of pocket, efficient use of storage allocation was a necessity. SQLite fulfilled these requirements and did not deprive me of any modern features to make my code cleaner.</p>
+<p>To run the application, we used an ASGI (Asynchronous server gateway interface) to run the API, specifically we used <a href="https://www.uvicorn.org/">uvicorn</a>. Again, it is lightweight, efficient and can handle asynchronous calls to allow for an overall faster user experience.</p>
+<h2 id="data-structures">Data Structures</h2>
+<p>All of the data sent from the frontend was sent in the form of JSON. To allow our backend to interpret this, we used custom BaseModels for each POST &amp; GET call. For example, if our frontend called a login function such as:</p>
+<pre><code>this.http.post(this.URL + &quot;/check_student_login&quot;, {email: &quot;example@example.com&quot;, username: &quot;example&quot;, password: &quot;example&quot;}).subscribe((res: any) =&gt; {
+</code></pre>
+<p>Where, <code>email</code>, <code>username</code> and <code>password</code> are the JSON parameters, then our backend model would look like:</p>
+<pre><code>from pydantic import BaseModel # Module to create the models
+class PostLoginCheckStudentModel(BaseModel):
+
+    email: str  
+    username: str
+    password: str
+</code></pre>
+<p>And the API would receive the call like so:</p>
+<pre><code>@app.post(&quot;/api/check_student_login&quot;)
+async def check_student_login_post(user: PostLoginCheckStudentModel):
+
+  return check_student_login(user.email, user.password) # Calls a function on the backend
+</code></pre>
+<p>These Data Structures are repeated throughout the API and are paramount to our data manipulation methods.</p>
+<h2 id="encryption">Encryption</h2>
+<p>Firstly, all passwords are encrypted before being stored in the backend. They are encrypted using Passlib's <code>CryptContext</code> module with 'bcrypt' as the schema. The password is encrypted with the following code:</p>
+<pre><code>from pydantic import BaseModel # Import module
+pwd_context = CryptContext(schemes=[&quot;bcrypt&quot;], deprecated=&quot;auto&quot;) # Identify the schema used 
+def hash_password(password): # Take a plaintext password &amp; convert it to ciphertext
+
+    return pwd_context.hash(password)
+</code></pre>
+<p>This will encrypt our password. It is extremely secure as each password is non-reversible. This results in the same input string having a variable output hash as the starting 'salt' used by the algorithm will be different. For example, an input password of <code>1234</code> could result in: <br/>
+- $2b$12$zProG7RawgHpdXZ9RfxYZ.pcwZy4N29C6mRzBb8yAFvoHc5TSSyZC <br/>
+- $2b$12$0DPNbWZDAX5fJl4pyBHnIuWiLk.2w/rxU/MnuKFznmjouUMjFxW5. <br/>
+- $2b$12$U6PDFiGrqooLxsnHJ7X9gehpzH3tLiI./BH8oj3HejMSyZvGHPneC <br/>
+- $2b$12$YJK4L0S8pcFKokWUYqf1VuDtjxy.KptvvBN9VTJIvTPTuwc36KwAe <br/>
+- $2b$12$MWwHq8PHskJqF2EoGOI60..J92SVyjD5FHVc4Ugbv7ZnD10Wso6yO <br/>
+- $2b$12$r5qvt.4ik//TSFaVWxWZ3uFGdmUXJL35.FXeeb2uDiWSQSZYQWv0i <br/>
+With there being an almost infinite number of potential passwords based on the starting 'salt'.</p>
+<p>To verify the value of our password, we do not reverse the hash. This is because reversing the hash is impossible. Instead, we use an inbuilt function that compares the plain-text to the hashed cipher-text. This functionality is used when authenticating a user during login and is done like such:</p>
+<pre><code>from pydantic import BaseModel # Import module
+pwd_context = CryptContext(schemes=[&quot;bcrypt&quot;], deprecated=&quot;auto&quot;) # Identify the schema used 
+def verify_password(unhashed, hashed): 
+
+    return pwd_context.verify(unhashed, hashed) # Returns a boolean
+</code></pre>
+<p>This function compares the original 'salt' and 'work factor' (Number of encryption iterations) and calculates whether the hash could have been derived from this input. If the algorithm deems it possible, then a boolean value of <code>True</code> is returned, otherwise the function returns <code>False</code>.</p></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../js/base.js"></script>
+        <script src="../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
