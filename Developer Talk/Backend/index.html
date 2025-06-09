@@ -94,6 +94,11 @@
               <ul class="nav flex-column">
               </ul>
             </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#tokens" class="nav-link">Tokens</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
         </ul>
     </div>
 </div></div>
@@ -144,7 +149,136 @@ def verify_password(unhashed, hashed):
 
     return pwd_context.verify(unhashed, hashed) # Returns a boolean
 </code></pre>
-<p>This function compares the original 'salt' and 'work factor' (Number of encryption iterations) and calculates whether the hash could have been derived from this input. If the algorithm deems it possible, then a boolean value of <code>True</code> is returned, otherwise the function returns <code>False</code>.</p></div>
+<p>This function compares the original 'salt' and 'work factor' (Number of encryption iterations) and calculates whether the hash could have been derived from this input. If the algorithm deems it possible, then a boolean value of <code>True</code> is returned, otherwise the function returns <code>False</code>.</p>
+<h2 id="tokens">Tokens</h2>
+<p>When the frontend needs to make any request to the backend, it needs to provide a token. This token is valid for 7 days and stores the <code>name</code>, <code>email</code> and <code>id</code> of the user (student) that is currently logged in. <br/></p>
+<p>When a user attempts to login, the details they input are checked against our database. If the email and password inputted align with an email and password from the database, a token is created and sent to the fronted. The token is created using the code:</p>
+<pre><code>def get_user_token(student: Student):
+    to_encode = {
+        'details' : {'name': student.name, 'email': student.email, 'id': student.id},
+        'expiry' : str(datetime.utcnow() + timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    }
+    return jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
+</code></pre>
+<p>Where <code>SECRET_KEY</code> is a 256-bit custom code that is used for encryption and the algorithm is HS256. This token is then stored in the frontend. As a result of this, the user will not have to log in to the website on every occurrence of accessing the website. The fronted injects this token into every request as shown by the code: </p>
+<pre><code>@Injectable()
+export class CookieInterceptor implements HttpInterceptor {
+
+    private platformId = inject(PLATFORM_ID);
+    intercept(request: HttpRequest&lt;unknown&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;unknown&gt;&gt; { // Intercepts an incoming request
+
+        let token: string | undefined;
+        if (isPlatformBrowser(this.platformId)) {
+        token = document.cookie.split(&quot;; &quot;).find((row) =&gt; row.startsWith(&quot;token=&quot;))?.split(&quot;=&quot;)[1];
+    } // Extracts the token from the web-browser
+
+        const modifiedRequest = request.clone({
+            withCredentials: true,
+            setHeaders: token ? { 'token': token } : {} // Adds the token to the request    
+        });
+
+    return next.handle(modifiedRequest); // Sends the request to the API
+    }
+
+}
+</code></pre>
+<p>Once the backend receives this token, it then verifies it in every single function before even executing the intended request of the method call. This is done through the code: </p>
+<pre><code>@app.post(&quot;/api/function_name&quot;)
+async def post_delete_user(request: Request):
+    token_res = validate_student(request.headers.get('token')) # Runs a backend function to validate the token by extracting the user details and checking the expiry of the token
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={&quot;message&quot;: &quot;Invalid token&quot;}) # Prevents any functions if the token is invalid
+    else:
+
+        # Execute the intended code here
+</code></pre>
+<p>To validate the token, the code firsts calls the function <code>validate_student()</code>:</p>
+<pre><code>def validate_student(token):
+    try:
+
+        res = get_student_from_token(token)
+        if res == &quot;Token Expired&quot;: # Checks if the token is past its expiry date
+
+            return False
+        else:
+
+            # Returns details in the form of a list
+            return [res['name'], res['email'], res['id']]
+            # If the token is invalid, return False
+    except InvalidTokenError: 
+
+        return False
+
+    # If the token cannot be decoded, return False
+
+    except InvalidSignatureError: # Checks if the user has tried to use token injection, resulting in an invalid token
+
+        return False
+</code></pre>
+<p>To get the <code>res</code> variable, our code then decodes the token using the <code>get_student_from_token(token: str)</code> function:</p>
+<pre><code>def get_student_from_token(token):
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM])
+    expiry = payload.get('expiry')
+    if datetime.utcnow() &gt;= datetime.strptime(expiry, '%Y-%m-%d %H:%M:%S.%f'): # Compares the expiry date to the current date based on UCT
+
+        return &quot;Token Expired&quot;
+    else:
+
+        return payload.get('details') # Returns the details as a dictionary of the name, email and UID
+</code></pre>
+<p>This means that an expired or invalid token will immediately be rejected but a valid and correct token will be allowed. The app then performs all of its functions based on this data, allowing the app to extract the user's notes based on the <code>OWNER_EMAIL</code> property of each file, ensuring the privacy of user data and maintains the user experience. </p>
+<p>If the app returns a <code>401</code> error due to a bad token, the frontend intercepts this error and redirects the user to a login/sign-up page, as shown in the code: </p>
+<pre><code>@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+    constructor(private router: Router, private route: ActivatedRoute) {}
+    getChildRoute(route: ActivatedRoute): ActivatedRoute {  
+        while (route.firstChild) {
+
+            route = route.firstChild;
+        }
+
+        return route;
+    }
+
+    intercept(request: HttpRequest&lt;any&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;any&gt;&gt; {
+
+        const modifiedRequest = request.clone({ // Clones any incoming requests
+
+            headers: request.headers.set('X-Requested-With', 'XMLHttpRequest'),
+            withCredentials: true
+        });
+
+        return next.handle(modifiedRequest).pipe( tap(() =&gt; {}, (err: any) =&gt; {
+
+
+            if (err instanceof HttpErrorResponse) { // Checks if we have received an error
+
+                if (err.status != 401 ) {
+
+                    return;
+                }
+
+                this.router.navigate(['/login']); // Prevents the request from going through and redirects to login page instead
+
+            }
+        }));
+
+    }
+
+}
+</code></pre>
+<p>This all ensures that the user can use the app easily, as they do not have to specify their ID when trying to use the app's functions whilst also preventing bad actors from accessing user data without protections.</p>
+<p>There is one exception to each API call having a token requirements. This is the <code>cloud_check()</code> function and is used by me to check if the API is responding to API calls. It is a simple <code>get</code> API call: </p>
+<pre><code>@app.get(&quot;/api/cloud_check&quot;)
+async def cloud_check():
+
+    return True
+</code></pre>
+<p>And was initially used by my service provider to notify me if my API goes down. This is the only potential vulnerability evident to me, and is more dependent on my service provider's (Linode) protection to IPv6 &amp; IPv4 calls to the server. When calling the method, it should return the following page:</p>
+<p><img alt="Cloud Check" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Cloud%20Check%20API%20Call%20example.png" /></p></div>
             </div>
         </div>
 
