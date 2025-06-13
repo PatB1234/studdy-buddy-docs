@@ -35,7 +35,7 @@
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
                             <li class="nav-item">
-                                <a href=".." class="nav-link">Home</a>
+                                <a href=".." class="nav-link">Pages</a>
                             </li>
                             <li class="nav-item">
                                 <a href="../Backend/" class="nav-link">Backend</a>
@@ -113,9 +113,100 @@
                     <div class="col-md-9" role="main">
 
 <h2 id="summarisations">Summarisations</h2>
+<p>Firstly, we created the ability for the user to summarise their notes with the click of a button. When the notes are uploaded, the user should simply navigate to the 'Summarise' tab on the NavBar and click summarise (with their notes selected of course) and wait before seeing their notes condensed into a much more digestible format. For example, the user would see the following: <br/></p>
+<p><img alt="Summarisation Example" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Summarisation%20Example.png" /></p>
+<p>As you can see, there is also support for Rich Text, which is commonly returned by the AI's API. This allows for easier reading and was implemented later. For more information, view the improvements section</p>
+<p>To get the AI to summarise the code was as follows: <br/></p>
+<pre><code>def summariser(noteID):
+
+    notes = upload_notes(noteID) # Uploads notes to AI as context
+    return (run_prompt(notes, &quot;Summarise the notes&quot;))
+</code></pre>
 <h2 id="flashcards">Flashcards</h2>
+<p>For flashcards, we added the data as context and simply asked the AI to return the data as a <code>json</code> object and gave an example of the formatting that should be done. Additionally, we used a data cleaner to remove any additional rich text characteristics as otherwise, our code would not have been able to parse the data. This was done using the following prompt: <br/></p>
+<pre><code>def flashcards(noteID):
+    for i in range(len(CACHED_FLASHCARDS)): # Initially Checks to see if the flashcards are already present in the Cache
+
+        if CACHED_FLASHCARDS[i][0] == noteID:
+            return CACHED_FLASHCARDS[i][1]
+
+
+    notes = upload_notes(noteID)
+    cards = str((model.generate_content(
+        [notes, &quot;Make flashcards for the notes given. Make these short flashcards witha back of no more than 20 words. Return the data as a  json object without any additional formatting or rich text backticks/identifiers LISTEN TO ME NO BACKTICS OR IDENTIFIERS do not put the json identifier. A good example of how you should do it is this: [{'Front': 'I am the front of Card 1', 'Back': 'I am the back of Card 1'}, {'Front': 'I am the front of Card 2', 'Back': 'I am the back of Card 2'}d]&quot;])).text) # This is the prompt
+    flashcards = data_cleaner(cards, True, True) # Cleans data
+    CACHED_FLASHCARDS.append([noteID, flashcards])
+    return flashcards
+</code></pre>
+<p>The data cleaner's code:</p>
+<pre><code>def data_cleaner(value, remove_new_line: bool, isJson: bool):  # Just cleans the data
+
+    value = value.strip()
+    value = re.sub('[`]', '', value)
+    if (remove_new_line):
+
+        value = value.replace(&quot;\n&quot;, &quot;&quot;)
+    value = value.title()
+
+    if (isJson):
+
+        value = json.loads(value[value.index(&quot;[&quot;):])
+
+    return value
+</code></pre>
+<p>This is the advantage of AI, as a majority of the data parsing can simply be instructed to the AI as its task, and the AI does it.</p>
 <h2 id="question-answers">Question &amp; Answers</h2>
-<h2 id="custom-prompt">Custom Prompt</h2></div>
+<p>When the user requests a question to answer, the backend first checks the cache if there is an existing question deck. If there is, the code pulls a question out and removes it from the deck. If there is no existing deck, the code generates a deck of questions, pulls a question, removes it from the deck and adds it to the cache. If the number of questions in the deck dips below 3, the deck is regenerated. This can be seen by the code below: <br/></p>
+<pre><code>def make_questions(noteID): 
+    curr_questions  = []    
+    iter = -1
+    for i in range(len(CACHED_QUESTIONS)):
+
+        if CACHED_QUESTIONS[i][0] == noteID:
+            curr_questions = CACHED_QUESTIONS[i][1]
+            iter = i
+            break
+
+    if iter == -1:
+
+        CACHED_QUESTIONS.append([noteID, []])
+        iter = len(CACHED_QUESTIONS) - 1
+    if curr_questions == [] or len(curr_questions) &lt; 3: 
+
+        notes = upload_notes(noteID)
+        try: 
+            res = str((model.generate_content(
+                [notes, f&quot;Generate 10 questions on these notes. Return the data as a python array without any additional formatting or rich text backticks/identifiers. ONLY GIVE THE QUESTIONS AND NO ANSWERS. DONT REPEAT QUESTIONS YOU HVAE ASKED IN THE CURRENT SESSION&quot;])).text)
+            res = ast.literal_eval(data_cleaner(res, True, False))
+            CACHED_QUESTIONS[iter][1] = res
+            CACHED_QUESTIONS[iter][1].pop(0)
+            curr_questions = CACHED_QUESTIONS[iter][1]
+            return curr_questions[0]
+        except:
+
+            return &quot;Error generating questions, please try again in a few minutes&quot;
+    else:
+
+        CACHED_QUESTIONS[iter][1].pop(0)
+        return curr_questions[0]
+
+</code></pre>
+<p>When the user want to check the answer to their question, the backend receives the question, the user's answer and the ID of the file that the question is from. The backend then sends all of this data as context to the AI and asks it to return whether the given answer is valid for the question depending on the context. This can be seen by the code below: <br/></p>
+<pre><code>
+def check_question(question, answer, noteID): 
+
+    notes = upload_notes(noteID)
+    res = (model.generate_content(
+        [notes, f&quot;is the answer {answer} correct for the question {question}&quot;])).text
+    return res
+
+
+</code></pre>
+<p>The UI looks as follows:
+<img alt="QA with response" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Question%20%26%20Answer.jpg" /></p>
+<h2 id="custom-prompt">Custom Prompt</h2>
+<p>Here, the user can communicate with the AI as they please using their notes as context. This creates a user-friendly, attractive environment that allows students to expand on their knowledge of their notes. For example, below is an example of the AI creating a Haiku based on the notes, as per the user's request.</p>
+<p><img alt="Haiku" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Haiku.png" />Additionally, you can stack these responses. Asking a new question will not delete the previous response, unless you reload the page. There is simply a divider that will be placed between the previous response and the current response</p></div>
             </div>
         </div>
 
