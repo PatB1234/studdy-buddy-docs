@@ -98,24 +98,28 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="1"><a href="#snackbars" class="nav-link">Snackbars</a>
+            <li class="nav-item" data-bs-level="2"><a href="#snackbars" class="nav-link">Snackbars</a>
               <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#flashcards" class="nav-link">Flashcards</a>
               <ul class="nav flex-column">
               </ul>
             </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#http-requests" class="nav-link">HTTP Requests</a>
               <ul class="nav flex-column">
               </ul>
             </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#angular-material" class="nav-link">Angular Material</a>
               <ul class="nav flex-column">
               </ul>
             </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#icons" class="nav-link">Icons</a>
               <ul class="nav flex-column">
-              </ul>
-            </li>
               </ul>
             </li>
         </ul>
@@ -123,16 +127,193 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
+<p>A well designed API needs a well-designed frontend to allow the user to use the API well. To do this, I had to utilise functions that had the user in mind. This included things such as Angular, Angular Material, and Google Icon Library.</p>
 <h2 id="router">Router</h2>
+<p>Firstly, we needed to allow users to navigate through the pages. This was done through the use of angular's routers. Angular is a component-based framework. This means that each page is its own component. To allow for navigation and appropriate displaying of the correct component, we have to code the correct paths in. This is done like so:</p>
+<pre><code>export const routes: Routes = [
+    {
+        path: '',
+        component: DashboardComponent  // DASHBOARD COMPONENT
+    },
+    {
+        path: 'custom-prompt', 
+        component: CustomPromptComponent
+    },
+    {
+        path: 'flashcards',
+        component: FlashcardsComponent
+    },
+    {
+        path: 'question-answer',
+        component: QuestionAnswerComponent
+    }, 
+    {
+        path: 'summariser',
+        component: SummariserComponent
+    },
+    {
+        path: 'login',
+        component: LoginComponent
+    },
+    {
+        path: 'sign-up',
+        component: SignUpComponent
+    },
+    {
+        path: 'student-profile',
+        component: ViewStudentProfileComponent
+    },
+    {
+        path: 'add-section',
+        component: AddSectionComponent
+    }
+];
+</code></pre>
+<p>Where each path is the URL path. So the <code>FlashcardComponent</code> could be found at the URL https://studdybuddy.app/flashcards</p>
+<p>This also allows for navigation within the code. For example, if a user is not logged in, the code automatically navigates them to the login page with the code:
+<code>this.router.navigate(['/login']);</code></p>
 <h2 id="interceptors">Interceptors</h2>
+<p>When something is not correct, for example if a user is not logged in or there is an error returned by the backend, the code has to intercept it to ensure that the frontend does not view these errors and allow them to correct the mistake without confusing them.</p>
 <h3 id="cookie">Cookie</h3>
+<p>Firstly, we have the cookie interceptor component. The code is:</p>
+<pre><code>import { Injectable, inject } from '@angular/core';
+import {
+  HttpRequest,
+  HttpHandler,
+  HttpEvent,
+  HttpInterceptor
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+
+@Injectable()
+export class CookieInterceptor implements HttpInterceptor {
+  private platformId = inject(PLATFORM_ID);
+
+  intercept(request: HttpRequest&lt;unknown&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;unknown&gt;&gt; {
+    let token: string | undefined;
+
+    if (isPlatformBrowser(this.platformId)) {
+      token = document.cookie.split(&quot;; &quot;)
+        .find((row) =&gt; row.startsWith(&quot;token=&quot;))
+        ?.split(&quot;=&quot;)[1];
+    }
+
+    const modifiedRequest = request.clone({
+      withCredentials: true,
+      setHeaders: token ? { 'token': token } : {}
+    });
+
+    return next.handle(modifiedRequest);
+  }
+}
+</code></pre>
+<p>This code extracts a token from the user's browser storage and automatically adds it to every request that is sent. This ensure that the user is authenticated to prevent injection to the Gemini API.</p>
 <h3 id="error">Error</h3>
-<h1 id="snackbars">Snackbars</h1>
+<p>If the backend returns an error, particularly a 401 error indicating that a user is not logged in (from an invalid cookie), the frontend intercepts it to prevent the app stopping. The code is:</p>
+<pre><code>import { Injectable } from '@angular/core';
+import {
+    HttpRequest,
+    HttpHandler,
+    HttpEvent,
+    HttpInterceptor,
+    HttpErrorResponse
+} from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { Router , ActivatedRoute, NavigationEnd} from '@angular/router';
+import {tap, filter} from 'rxjs/operators';
+@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+
+    constructor(private router: Router, private route: ActivatedRoute) {}
+    getChildRoute(route: ActivatedRoute): ActivatedRoute {
+        while (route.firstChild) {
+            route = route.firstChild;
+        }
+        return route;
+        }
+    intercept(request: HttpRequest&lt;any&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;any&gt;&gt; {
+
+        const modifiedRequest = request.clone({
+            headers: request.headers.set('X-Requested-With', 'XMLHttpRequest'),
+            withCredentials: true
+        });
+
+
+        return next.handle(modifiedRequest).pipe( tap(() =&gt; {}, (err: any) =&gt; {
+
+            if (err instanceof  HttpErrorResponse) {
+
+                if (err.status != 401 ) {
+
+                    return;
+                }
+
+                this.router.navigate(['/login']);
+            }
+        }));
+    }
+}
+</code></pre>
+<p>Here, the code intercepts all incoming requests. If the response has a code of 401, it automatically redirects to the login page and discards the contents of the request. This prevents an error from reaching the user and causing the app to halt.</p>
+<h2 id="snackbars">Snackbars</h2>
+<p>Some of these requests take time. To let the user know, I used angular-material's snackbars to prevent them from leaving the page prematurely due to a request taking time. For example, below is the snackbar that appears when a user requests to create flashcards.</p>
+<p><img alt="Snackbar Flashcards" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/snackbar-flashcard.png" /></p>
+<p>This is the snackbar that appears when the user tries to create flashcards, ensuring that the user is not confused by wait times.</p>
+<p>Additionally, the snackbar can also be used to display errors. For example, if the user does not have an existing account and tries to login, the app returns a separate snackbar, as shown below:
+<img alt="Snackbar error" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/login-snackbar.png" />
+This indicates to the user that they need to sign in.</p>
 <h2 id="flashcards">Flashcards</h2>
+<p>When the flashcards are requested, we use a custom-built component that was taken from a StackBlitz repository. This can be seen below:
+<img alt="Flaschards" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Flashcards.png" />
+This creates a friendly environment for the user to interact with their flashcards. There is a display of the flashcard they are currently looking at and there is buttons to flip between the various flashcards. Additionally, the user can just click the flashcard to view its behind side.</p>
 <h3 id="animations">Animations</h3>
+<p>When flipping between the sides of the flashcards, there is an animations which can be seen below:
+<img alt="Flashcard Animation" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Flashcard%20Animation.gif" />
+This brings a better user experience as it adds fluidity to the app. The code to do this is the following:</p>
+<pre><code>  animations: [
+        trigger('flipState', [ // Triggered when the user clicks the flashcards
+          state('active', style({
+            transform: 'rotateY(179deg)'
+          })),
+          state('inactive', style({
+            transform: 'rotateY(0)'
+          })),
+          transition('active =&gt; inactive', animate('500ms ease-out')),
+          transition('inactive =&gt; active', animate('500ms ease-in'))
+        ])
+      ]
+</code></pre>
 <h2 id="http-requests">HTTP Requests</h2>
+<p>Every single component makes an HTTP request. We do this with the general format of the GET/POST Request as shown in the code:</p>
+<pre><code>// For a POST Request
+this.http.post(this.URL + &quot;API_REQUEST&quot;, DATA).subscribe((res: any) =&gt; {
+
+})  
+
+// For a GET Request
+this.http.get(this.URL + &quot;/API_REQUEST&quot;).subscribe((res: any) =&gt; {
+
+})
+</code></pre>
 <h2 id="angular-material">Angular Material</h2>
-<h2 id="icons">Icons</h2></div>
+<p>I wanted the app to look good. To do this, I used premade components from a proprietary npm module called <a href="https://material.angular.dev/">Angular Material</a>. This is where I have taken various components such as: <br/></p>
+<ul>
+<li>The NavBar  <br/>
+<img alt="NavBar" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Navbar.png" /> <br/></li>
+<li>The Side Tree <br/>
+<img alt="Side Tree" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Sidebar.png" /> <br/></li>
+<li>The aforementioned snack bar <br/>
+And many more</li>
+</ul>
+<p>This creates fluidity and cleanliness in the app and also adds a dynamic layer as these components are scaleable to the size of their display, creating a better user experience</p>
+<h2 id="icons">Icons</h2>
+<p>I used the google Icon library to simplify the purpose of some buttons into images rather than words to reduce the page's clutter. They have been used in various places such as:
+- The menu Row <br/>
+<img alt="Menu Row" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Menu.png" /> <br/>
+- Each node on the side bar <br/>
+<img alt="Side Bar" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Sidebar.png" /></p></div>
             </div>
         </div>
 
