@@ -41,16 +41,16 @@
                                 <a href="./" class="nav-link active" aria-current="page">Backend</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../Core%20Functions/" class="nav-link">Summarisations</a>
+                                <a href="../Core%20Functions/" class="nav-link">Core Functions</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../Frontend/" class="nav-link">Router</a>
+                                <a href="../Frontend/" class="nav-link">Frontend</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../Improvements/" class="nav-link">Snack Bar addition</a>
+                                <a href="../Improvements/" class="nav-link">Improvements</a>
                             </li>
                             <li class="nav-item">
-                                <a href="../Learning/" class="nav-link">Angular</a>
+                                <a href="../Learning/" class="nav-link">Learning</a>
                             </li>
                         </ul>
 
@@ -105,33 +105,11 @@
             
             <li class="nav-item" data-bs-level="1"><a href="#storing-user-files" class="nav-link">Storing user files</a>
               <ul class="nav flex-column">
-              </ul>
-            </li>
-            
-            <li class="nav-item" data-bs-level="1"><a href="#volatile-data" class="nav-link">Volatile Data</a>
-              <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#current-notes" class="nav-link">Current Notes</a>
+            <li class="nav-item" data-bs-level="2"><a href="#volatile-data" class="nav-link">Volatile Data</a>
               <ul class="nav flex-column">
               </ul>
             </li>
-            <li class="nav-item" data-bs-level="2"><a href="#caching" class="nav-link">Caching</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-              </ul>
-            </li>
-            
-            <li class="nav-item" data-bs-level="1"><a href="#non-volatile-data" class="nav-link">Non-volatile data</a>
-              <ul class="nav flex-column">
-            <li class="nav-item" data-bs-level="2"><a href="#notes" class="nav-link">Notes</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#login-data" class="nav-link">Login Data</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            <li class="nav-item" data-bs-level="2"><a href="#tokens_1" class="nav-link">Tokens</a>
+            <li class="nav-item" data-bs-level="2"><a href="#non-volatile-data" class="nav-link">Non-volatile data</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -325,18 +303,18 @@ async def cloud_check():
 <p>We then compare it to the limit, returning a boolean value depending on the result.</p>
 <p>However, we also have this statement encapsulated in a <code>try...except...</code> loop as if this request fails, then we know that the File is too large so we automatically reject it.</p>
 <p>NOTE: Files such as handwritten files have a lower capacity as they require more tokens and often cannot be decoded by the AI. To circumvent this, I am working on implementing a form of Vision AI to convert handwritten text to PDF Format.</p>
-<h1 id="volatile-data">Volatile Data</h1>
-<h2 id="current-notes">Current Notes</h2>
+<h2 id="volatile-data">Volatile Data</h2>
+<h3 id="current-notes">Current Notes</h3>
 <p>The note that the user currently has selected is stored as a python array, as this allows for quick read/write times and this data does not need to be non-volatile as the user can simply reselect the notes they are using as the AI's context.</p>
-<h2 id="caching">Caching</h2>
+<h3 id="caching">Caching</h3>
 <p>We also have caching in place. Previously, it would take anywhere from 30s-2min for the flashcard &amp; question-answer functionality. To avoid this, any generated flashcards are stored in an array. Before generating them, the code checks if flashcards for the given notes already exist. If they do, then those flashcards are returned. If not, flashcards are generated and stored.</p>
 <p>Similarly, the code generates 10 questions at a time and stores them in an array relative to the file. When a question is requested, a question is removed from this list and sent. Once the number of cached questions drops below 3, a new set of questions are requested from the AI. This reduces the wait-time for the user and also makes it more cost-effective on my part as I do not have to pay for as many requests.</p>
-<h1 id="non-volatile-data">Non-volatile data</h1>
-<h2 id="notes">Notes</h2>
+<h2 id="non-volatile-data">Non-volatile data</h2>
+<h3 id="notes">Notes</h3>
 <p>The notes stored are non-volatile as they are stored as PDF data.</p>
-<h2 id="login-data">Login Data</h2>
+<h3 id="login-data">Login Data</h3>
 <p>User information such as their emails, password and UID's are stored in a sqlite3 database on the SSD of our server</p>
-<h2 id="tokens_1">Tokens</h2>
+<h3 id="tokens_1">Tokens</h3>
 <p>Tokens are actually stored on the browser, and sent to the backend on a per-request basis. The Backend simply verifies their validity therefore they are considered non-volatile.</p></div>
             </div>
         </div>
