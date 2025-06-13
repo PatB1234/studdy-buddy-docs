@@ -114,14 +114,14 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p>The backend is built using <a href="https://www.python.org/downloads/release/python-3122/">Python 3.12.2</a>. This is not the latest release at the time, however I found it to be the most stable. I realised that newer version often have stability issues that cause them to crash or have problems that result in some core functionality not working as intended. To avoid this hassle, I chose a version that I have worked with before, as it would have support for all the packages required whilst also remaining stable, ensuring app &amp; user quality.</p>
-<p>The backend stores data in a typical SQL-based database. For python, we used <a href="https://docs.python.org/3/library/sqlite3.html">sqlite3</a>. This is a lightweight, high-speed and efficient database built for small-medium scale applications such as ours. As I am paying for the server out of pocket, efficient use of storage allocation was a necessity. SQLite fulfilled these requirements and did not deprive me of any modern features to make my code cleaner.</p>
-<p>To run the application, we used an ASGI (Asynchronous server gateway interface) to run the API, specifically we used <a href="https://www.uvicorn.org/">uvicorn</a>. Again, it is lightweight, efficient and can handle asynchronous calls to allow for an overall faster user experience.</p>
+<p>The backend is built using <a href="https://www.python.org/downloads/release/python-3122/">Python 3.12.2</a>. This is not the latest release at the time, however I found it to be the most stable. I realised that newer versions often have stability issues that cause them to crash or have problems that result in some core functionality not working as intended. To avoid this hassle, I chose a version that I have worked with before, as it would have support for all the packages required whilst also remaining stable, ensuring app &amp; user quality.</p>
+<p>The backend stores data in a typical SQL-based database. For python, we used <a href="https://docs.python.org/3/library/sqlite3.html">sqlite3</a>. This is a lightweight, high-speed and efficient database built for small-medium scale applications such as mine. As I am paying for the server out of pocket, efficient use of storage allocation was a necessity. SQLite fulfilled these requirements and did not deprive me of any modern features to make my code cleaner.</p>
+<p>To run the application, we used an ASGI server (Asynchronous server gateway interface) to run the API; specifically we used <a href="https://www.uvicorn.org/">uvicorn</a>. Again, it is lightweight, efficient and can handle asynchronous method calls to allow for an overall faster user experience.</p>
 <h2 id="data-structures">Data Structures</h2>
-<p>All of the data sent from the frontend was sent in the form of JSON. To allow our backend to interpret this, we used custom BaseModels for each POST &amp; GET call. For example, if our frontend called a login function such as:</p>
+<p>All of the data sent from the frontend is sent in the form of JSON data. To allow our backend to interpret this, we used custom BaseModels for each POST &amp; GET call. For example, if our frontend called a login function such as:</p>
 <pre><code>this.http.post(this.URL + &quot;/check_student_login&quot;, {email: &quot;example@example.com&quot;, username: &quot;example&quot;, password: &quot;example&quot;}).subscribe((res: any) =&gt; {
 </code></pre>
-<p>Where, <code>email</code>, <code>username</code> and <code>password</code> are the JSON parameters, then our backend model would look like:</p>
+<p>Where <code>email</code>, <code>username</code> and <code>password</code> are the JSON parameters. As a result our backend model would look like:</p>
 <pre><code>from pydantic import BaseModel # Module to create the models
 class PostLoginCheckStudentModel(BaseModel):
 
@@ -151,8 +151,8 @@ def hash_password(password): # Take a plaintext password &amp; convert it to cip
 - $2b$12$YJK4L0S8pcFKokWUYqf1VuDtjxy.KptvvBN9VTJIvTPTuwc36KwAe <br/>
 - $2b$12$MWwHq8PHskJqF2EoGOI60..J92SVyjD5FHVc4Ugbv7ZnD10Wso6yO <br/>
 - $2b$12$r5qvt.4ik//TSFaVWxWZ3uFGdmUXJL35.FXeeb2uDiWSQSZYQWv0i <br/>
-With there being an almost infinite number of potential passwords based on the starting 'salt'.</p>
-<p>To verify the value of our password, we do not reverse the hash. This is because reversing the hash is impossible. Instead, we use an inbuilt function that compares the plain-text to the hashed cipher-text. This functionality is used when authenticating a user during login and is done like such:</p>
+With there being a large number of potential passwords based on the starting 'salt'.</p>
+<p>To verify the value of our password, we do not reverse the hash. This is because reversing the hash is impossible. Instead, we use an inbuilt function that compares the plain-text to the hashed cipher-text. This functionality is used when authenticating a user during login and is done as such:</p>
 <pre><code>from pydantic import BaseModel # Import module
 pwd_context = CryptContext(schemes=[&quot;bcrypt&quot;], deprecated=&quot;auto&quot;) # Identify the schema used 
 def verify_password(unhashed, hashed): 
@@ -162,7 +162,7 @@ def verify_password(unhashed, hashed):
 <p>This function compares the original 'salt' and 'work factor' (Number of encryption iterations) and calculates whether the hash could have been derived from this input. If the algorithm deems it possible, then a boolean value of <code>True</code> is returned, otherwise the function returns <code>False</code>.</p>
 <h2 id="tokens">Tokens</h2>
 <p>When the frontend needs to make any request to the backend, it needs to provide a token. This token is valid for 7 days and stores the <code>name</code>, <code>email</code> and <code>id</code> of the user (student) that is currently logged in. <br/></p>
-<p>When a user attempts to login, the details they input are checked against our database. If the email and password inputted align with an email and password from the database, a token is created and sent to the fronted. The token is created using the code:</p>
+<p>When a user attempts to login, the details they input are checked against the database. If the email and password inputted align with an email and password from the database, a token is created and sent to the fronted. The token is created using the code:</p>
 <pre><code>def get_user_token(student: Student):
     to_encode = {
         'details' : {'name': student.name, 'email': student.email, 'id': student.id},
@@ -171,7 +171,7 @@ def verify_password(unhashed, hashed):
     }
     return jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
 </code></pre>
-<p>Where <code>SECRET_KEY</code> is a 256-bit custom code that is used for encryption and the algorithm is HS256. This token is then stored in the frontend. As a result of this, the user will not have to log in to the website on every occurrence of accessing the website. The fronted injects this token into every request as shown by the code: </p>
+<p>Where <code>SECRET_KEY</code> is a 256-bit custom code that is used for encryption and the algorithm is HS256. This token is then stored in the user's browser data. As a result of this, the user will not have to log in to the website on every occurrence of accessing the website. The fronted injects this token into every request as shown by the code: </p>
 <pre><code>@Injectable()
 export class CookieInterceptor implements HttpInterceptor {
 
@@ -193,7 +193,7 @@ export class CookieInterceptor implements HttpInterceptor {
 
 }
 </code></pre>
-<p>Once the backend receives this token, it then verifies it in every single function before even executing the intended request of the method call. This is done through the code: </p>
+<p>Once the backend receives this token, it then verifies the token in every single function before even executing the intended request of the method call. This is done through the code: </p>
 <pre><code>@app.post(&quot;/api/function_name&quot;)
 async def function_name(request: Request):
     token_res = validate_student(request.headers.get('token')) # Runs a backend function to validate the token by extracting the user details and checking the expiry of the token
@@ -227,7 +227,7 @@ async def function_name(request: Request):
 
         return False
 </code></pre>
-<p>To get the <code>res</code> variable, our code then decodes the token using the <code>get_student_from_token(token: str)</code> function:</p>
+<p>To get the <code>res</code> variable, our code initially decodes the token using the <code>get_student_from_token(token: str)</code> function:</p>
 <pre><code>def get_student_from_token(token):
 
     payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM])
@@ -239,7 +239,7 @@ async def function_name(request: Request):
 
         return payload.get('details') # Returns the details as a dictionary of the name, email and UID
 </code></pre>
-<p>This means that an expired or invalid token will immediately be rejected but a valid and correct token will be allowed. The app then performs all of its functions based on this data, allowing the app to extract the user's notes based on the <code>OWNER_EMAIL</code> property of each file, ensuring the privacy of user data and maintains the user experience. </p>
+<p>This means that an expired or invalid token will immediately be rejected but a valid and correct token will be decoded. The app then performs all of its functions based on this data, allowing the app to extract the user's notes based on the <code>OWNER_EMAIL</code> property of each file, ensuring the privacy of user data and maintains the user experience. </p>
 <p>If the app returns a <code>401</code> error due to a bad token, the frontend intercepts this error and redirects the user to a login/sign-up page, as shown in the code: </p>
 <pre><code>@Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
@@ -280,29 +280,29 @@ export class ErrorInterceptor implements HttpInterceptor {
 
 }
 </code></pre>
-<p>This all ensures that the user can use the app easily, as they do not have to specify their ID when trying to use the app's functions whilst also preventing bad actors from accessing user data without protections.</p>
+<p>This all ensures that the user can use the app easily, as they do not have to specify their ID when trying to use the app's functions whilst also preventing bad actors from accessing user data.</p>
 <p>There is one exception to each API call having a token requirements. This is the <code>cloud_check()</code> function and is used by me to check if the API is responding to API calls. It is a simple <code>get</code> API call: </p>
 <pre><code>@app.get(&quot;/api/cloud_check&quot;)
 async def cloud_check():
 
     return True
 </code></pre>
-<p>And was initially used by my service provider to notify me if my API goes down. This is the only potential vulnerability evident to me, and is more dependent on my service provider's (Linode) protection to IPv6 &amp; IPv4 calls to the server. When calling the method, it should return the following page:</p>
+<p>And was initially used by my service provider to notify me if my API goes down. This is the only potential vulnerability evident to me, and is more dependent on my provider's (Linode) protection to unauthorised IPv6 &amp; IPv4 calls to the server. When calling the method, it should return the following page:</p>
 <p><img alt="Cloud Check" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Cloud%20Check%20API%20Call%20example.png" /></p>
 <h1 id="storing-user-files">Storing user files</h1>
 <p>When a user uploads a file, it is stored in our backend as a raw .PDF file. These files are not encrypted and are stored as their raw content. Their security is dependent upon the security of our service provider, Linode. The only feasible point of interception is when the file is being transmitted to the Backend from the Frontend.</p>
-<p>Before even allowing the data to be uploaded, we first have to verify its size. Gemini AI, like other AI converts input data and prompts to tokens that it can decode and understand. Similarly, input files are converted to tokens. There is a limit to the number of tokens that the Gemini AI can handle. To ensure that the files aren't too large, we use the <code>count_tokens</code> function of the API. This counts the tokens with the code: </p>
+<p>Before even allowing the data to be uploaded, we first have to verify its size. Gemini AI, like other commerical AIs converts input data and prompts to tokens that it can decode and understand. Similarly, input files are converted to tokens. There is a limit to the number of tokens that the AI can handle. To ensure that the files aren't too large (i.e. too many tokens), we use the <code>count_tokens</code> function of the API. This counts the tokens with the code: </p>
 <pre><code>token_no = client.models.count_tokens(model=model_name,contents=client.files.upload(file=file_path, config={'display_name': 'test_data'})).total_tokens
 </code></pre>
 <p>We then compare it to the limit, returning a boolean value depending on the result.</p>
-<p>However, we also have this statement encapsulated in a <code>try...except...</code> loop as if this request fails, then we know that the File is too large so we automatically reject it.</p>
-<p>NOTE: Files such as handwritten files have a lower capacity as they require more tokens and often cannot be decoded by the AI. To circumvent this, I am working on implementing a form of Vision AI to convert handwritten text to PDF Format.</p>
+<p>However, we also have this statement encapsulated in a <code>try...except...</code> loop as if this request fails, then we know that the file is too large so we automatically reject it.</p>
+<p>NOTE: Files such as handwritten files have a lower capacity as they require more tokens and often cannot be decoded by the AI. To circumvent this, I am working on implementing a form of Vision AI to convert handwritten text to PDF Format. However, this also has its limitations.</p>
 <h2 id="volatile-data">Volatile Data</h2>
 <h3 id="current-notes">Current Notes</h3>
-<p>The note that the user currently has selected is stored as a python array, as this allows for quick read/write times and this data does not need to be non-volatile as the user can simply reselect the notes they are using as the AI's context.</p>
+<p>The note that the user currently has selected is stored as a python array, as this allows for quick read/write times and this data does not need to be permanent as the user can simply reselect the notes they are using.</p>
 <h3 id="caching">Caching</h3>
-<p>We also have caching in place. Previously, it would take anywhere from 30s-2min for the flashcard &amp; question-answer functionality. To avoid this, any generated flashcards are stored in an array. Before generating them, the code checks if flashcards for the given notes already exist. If they do, then those flashcards are returned. If not, flashcards are generated and stored.</p>
-<p>Similarly, the code generates 10 questions at a time and stores them in an array relative to the file. When a question is requested, a question is removed from this list and sent. Once the number of cached questions drops below 3, a new set of questions are requested from the AI. This reduces the wait-time for the user and also makes it more cost-effective on my part as I do not have to pay for as many requests.</p>
+<p>We also have caching in place. Previously, it would take anywhere from 30s - 2min for the flashcard &amp; question-answer functionality to respond. To avoid this, any generated flashcards are stored in an array. Before generating them, the code checks if flashcards for the given notes already exist. If they do, then those flashcards are returned. If not, flashcards are generated and stored.</p>
+<p>Similarly, the code generates 10 questions at a time and stores them in an array relative to the file. When a question is requested, a question is removed from this list and sent. Once the number of cached questions drops below 3, a new set of questions are requested from the AI. This reduces the wait-time for the user and also makes it more cost-effective on my part as I have to pay for fewer requests, albeit there is a larger size per request.</p>
 <h2 id="non-volatile-data">Non-volatile data</h2>
 <h3 id="notes">Notes</h3>
 <p>The notes stored are non-volatile as they are stored as PDF data.</p>

@@ -121,7 +121,7 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p>A well designed API needs a well-designed frontend to allow the user to use the API well. To do this, I had to utilise functions that had the user in mind. This included things such as Angular, Angular Material, and Google Icon Library.</p>
+<p>A well designed API needs a well-designed frontend to allow the user to use the API well. To do this, I had to utilise functions that had the user in mind. This included things such as Angular, Angular Material, and the Google Icon Library.</p>
 <h2 id="router">Router</h2>
 <p>Firstly, we needed to allow users to navigate through the pages. This was done through the use of angular's routers. Angular is a component-based framework. This means that each page is its own component. To allow for navigation and appropriate displaying of the correct component, we have to code the correct paths in. This is done like so:</p>
 <pre><code>export const routes: Routes = [
@@ -167,7 +167,7 @@
 <p>This also allows for navigation within the code. For example, if a user is not logged in, the code automatically navigates them to the login page with the code:
 <code>this.router.navigate(['/login']);</code></p>
 <h2 id="interceptors">Interceptors</h2>
-<p>When something is not correct, for example if a user is not logged in or there is an error returned by the backend, the code has to intercept it to ensure that the frontend does not view these errors and allow them to correct the mistake without confusing them.</p>
+<p>When something is not correct, for example if a user is not logged in or there is an error returned by the backend, the code has to intercept it to ensure that the frontend does not display these errors and allow them to correct the mistake without confusing them.</p>
 <h3 id="cookie">Cookie</h3>
 <p>Firstly, we have the cookie interceptor component. The code is:</p>
 <pre><code>import { Injectable, inject } from '@angular/core';
@@ -205,7 +205,7 @@ export class CookieInterceptor implements HttpInterceptor {
 </code></pre>
 <p>This code extracts a token from the user's browser storage and automatically adds it to every request that is sent. This ensure that the user is authenticated to prevent injection to the Gemini API.</p>
 <h3 id="error">Error</h3>
-<p>If the backend returns an error, particularly a 401 error indicating that a user is not logged in (from an invalid cookie), the frontend intercepts it to prevent the app stopping. The code is:</p>
+<p>If the backend returns an error, particularly a 401 error indicating that a user is not logged in (from an invalid cookie), the frontend intercepts it to prevent the app from stopping or halting. The code is:</p>
 <pre><code>import { Injectable } from '@angular/core';
 import {
     HttpRequest,
@@ -252,14 +252,14 @@ export class ErrorInterceptor implements HttpInterceptor {
 </code></pre>
 <p>Here, the code intercepts all incoming requests. If the response has a code of 401, it automatically redirects to the login page and discards the contents of the request. This prevents an error from reaching the user and causing the app to halt.</p>
 <h2 id="snackbars">Snackbars</h2>
-<p>Some of these requests take time. To let the user know, I used angular-material's snackbars to prevent them from leaving the page prematurely due to a request taking time. For example, below is the snackbar that appears when a user requests to create flashcards.</p>
+<p>Some of these requests take time before the AI can respond. To let the user know, I used Angular-Material's snackbars to prevent the user from leaving the page prematurely due to a request taking time. For example, below is the snackbar that appears when a user requests to create flashcards.</p>
 <p><img alt="Snackbar Flashcards" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/snackbar-flashcard.png" /></p>
 <p>This is the snackbar that appears when the user tries to create flashcards, ensuring that the user is not confused by wait times.</p>
 <p>Additionally, the snackbar can also be used to display errors. For example, if the user does not have an existing account and tries to login, the app returns a separate snackbar, as shown below:
 <img alt="Snackbar error" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/login-snackbar.png" />
 This indicates to the user that they need to sign in.</p>
 <h2 id="flashcards">Flashcards</h2>
-<p>When the flashcards are requested, we use a custom-built component that was taken from a StackBlitz repository. This can be seen below:
+<p>When the flashcards are requested, we use a custom-built component that was taken from a StackBlitz repository to display them. This can be seen below:
 <img alt="Flaschards" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Flashcards.png" />
 This creates a friendly environment for the user to interact with their flashcards. There is a display of the flashcard they are currently looking at and there is buttons to flip between the various flashcards. Additionally, the user can just click the flashcard to view its behind side.</p>
 <h3 id="animations">Animations</h3>
@@ -281,7 +281,7 @@ This brings a better user experience as it adds fluidity to the app. The code to
       ]
 </code></pre>
 <h2 id="http-requests">HTTP Requests</h2>
-<p>Every single component makes an HTTP request. We do this with the general format of the GET/POST Request as shown in the code:</p>
+<p>Every single component makes an HTTP request. We do this with the general format of the GET/POST Request as shown in the code below:</p>
 <pre><code>// For a POST Request
 this.http.post(this.URL + &quot;API_REQUEST&quot;, DATA).subscribe((res: any) =&gt; {
 
@@ -293,7 +293,7 @@ this.http.get(this.URL + &quot;/API_REQUEST&quot;).subscribe((res: any) =&gt; {
 })
 </code></pre>
 <h2 id="angular-material">Angular Material</h2>
-<p>I wanted the app to look good. To do this, I used premade components from a proprietary npm module called <a href="https://material.angular.dev/">Angular Material</a>. This is where I have taken various components such as: <br/></p>
+<p>I wanted the app to look good. To do this, I used premade components from a proprietary npm module called <a href="https://material.angular.dev/">Angular Material</a>. From here, I have taken various components such as: <br/></p>
 <ul>
 <li>The NavBar  <br/>
 <img alt="NavBar" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Navbar.png" /> <br/></li>
