@@ -114,7 +114,6 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p>The backend is built using <a href="https://www.python.org/downloads/release/python-3122/">Python 3.12.2</a>. This is not the latest release at the time, however I found it to be the most stable. I realised that newer versions often have stability issues that cause them to crash or have problems that result in some core functionality not working as intended. To avoid this hassle, I chose a version that I have worked with before, as it would have support for all the packages required whilst also remaining stable, ensuring app &amp; user quality.</p>
 <p>The backend stores data in a typical SQL-based database. For python, we used <a href="https://docs.python.org/3/library/sqlite3.html">sqlite3</a>. This is a lightweight, high-speed and efficient database built for small-medium scale applications such as mine. As I am paying for the server out of pocket, efficient use of storage allocation was a necessity. SQLite fulfilled these requirements and did not deprive me of any modern features to make my code cleaner.</p>
 <p>To run the application, we used an ASGI server (Asynchronous server gateway interface) to run the API; specifically we used <a href="https://www.uvicorn.org/">uvicorn</a>. Again, it is lightweight, efficient and can handle asynchronous method calls to allow for an overall faster user experience.</p>
 <h2 id="data-structures">Data Structures</h2>
@@ -162,7 +161,7 @@ def verify_password(unhashed, hashed):
 <p>This function compares the original 'salt' and 'work factor' (Number of encryption iterations) and calculates whether the hash could have been derived from this input. If the algorithm deems it possible, then a boolean value of <code>True</code> is returned, otherwise the function returns <code>False</code>.</p>
 <h2 id="tokens">Tokens</h2>
 <p>When the frontend needs to make any request to the backend, it needs to provide a token. This token is valid for 7 days and stores the <code>name</code>, <code>email</code> and <code>id</code> of the user (student) that is currently logged in. <br/></p>
-<p>When a user attempts to login, the details they input are checked against the database. If the email and password inputted align with an email and password from the database, a token is created and sent to the fronted. The token is created using the code:</p>
+<p>When a user attempts to login, the details they input are checked against the database. If the email and password inputted align with an email and password from the database, a token is created and sent to the frontend. The token is created using the code:</p>
 <pre><code>def get_user_token(student: Student):
     to_encode = {
         'details' : {'name': student.name, 'email': student.email, 'id': student.id},
@@ -171,7 +170,7 @@ def verify_password(unhashed, hashed):
     }
     return jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
 </code></pre>
-<p>Where <code>SECRET_KEY</code> is a 256-bit custom code that is used for encryption and the algorithm is HS256. This token is then stored in the user's browser data. As a result of this, the user will not have to log in to the website on every occurrence of accessing the website. The fronted injects this token into every request as shown by the code: </p>
+<p>Where <code>SECRET_KEY</code> is a 256-bit custom code that is used for encryption and the algorithm is HS256. This token is then stored in the user's browser data. As a result of this, the user will not have to log in to the website on every occurrence of accessing the website. The frontend injects this token into every request as shown by the code: </p>
 <pre><code>@Injectable()
 export class CookieInterceptor implements HttpInterceptor {
 
