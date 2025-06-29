@@ -35,7 +35,7 @@
                         <!-- Main navigation -->
                         <ul class="nav navbar-nav">
                             <li class="nav-item">
-                                <a href=".." class="nav-link">Pages</a>
+                                <a href=".." class="nav-link">Home</a>
                             </li>
                             <li class="nav-item">
                                 <a href="../Backend/" class="nav-link">Backend</a>
@@ -128,6 +128,51 @@
                     <div class="col-md-9" role="main">
 
 <h2 id="angular">Angular</h2>
+<p>To build this app, I had to decide on a framework of development. It was possible to build this from the ground up using HTML, CSS &amp; plain JS, but then I would loose the creature comforts that a well-designed framework brings such as scalability to screen-size, well designed premade components and a wide community that creates a support system when the average person begins their development journey.</p>
+<p>I vetted a few main frameworks and listed their Pros &amp; Cons below:</p>
+<table>
+<thead>
+<tr>
+<th>Framework name</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Angular</td>
+<td>- Full-featured framework with built-in routing, HTTP, and forms  <br/><br>- Powerful CLI and tooling   <br/><br>- TypeScript-first approach   <br/><br>- Backed by Google <br/></td>
+<td>- Steep learning curve  <br/> <br>- Verbose syntax and boilerplate  <br/> <br>- Larger bundle sizes<br/></td>
+</tr>
+<tr>
+<td>React</td>
+<td>- Component-based and flexible   <br/><br>- Large ecosystem and community   <br/><br>- Rich set of third-party libraries   <br/><br>- Backed by Meta <br/></td>
+<td>- Just a UI library, requires external tools for full setup  <br/><br>- Frequent updates and breaking changes  <br/><br>- Boilerplate for state management<br/></td>
+</tr>
+<tr>
+<td>Next.js</td>
+<td>- Built on top of React with full-stack features   <br/><br>- Server-side rendering (SSR) and static site generation (SSG)   <br/><br>- File-based routing   <br/><br>- Optimized performance and SEO <br/></td>
+<td>- Opinionated structure may not suit every project  <br/><br>- Learning curve if new to React or SSR  <br/><br>- Some features behind enterprise licenses<br/></td>
+</tr>
+<tr>
+<td>Svelte</td>
+<td>- Truly reactive and minimal boilerplate <br/>  <br>- Compiles to vanilla JS (no virtual DOM)  <br/> <br>- Fast performance and small bundle size  <br/><br>- Great developer experience <br/></td>
+<td>- Smaller ecosystem and community  <br/><br>- Less mature than React/Angular <br/> <br>- Fewer integrations and tooling options<br/></td>
+</tr>
+<tr>
+<td><br/></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h5 id="ultimately-i-decided-on-going-with-angular-this-is-because-of-a-few-reasons">Ultimately, I decided on going with angular. This is because of a few reasons:</h5>
+<ul>
+<li>I had previous experience with the framework <br/></li>
+<li>It was made by google, so I though integrating Gemini &amp; other google frameworks/APIs would be easier <br/></li>
+<li>Had a good community <br/></li>
+<li>Was less module-dependent compared to Angular, allowing for smoother development with a smaller build package. <br/></li>
+</ul>
 <h2 id="nginx">NGINX</h2>
 <h2 id="nohup">Nohup</h2>
 <h2 id="linux">Linux</h2>
