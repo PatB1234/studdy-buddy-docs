@@ -220,6 +220,23 @@ server {
 On the top we have the http:// requests. They automatically redirect to the https variant as that is much more secure. Secondly, to enable SSL/TLS in the same place, I had to use <code>certbot</code> to create a certificate that would auto-renew. Then, I had to force upgrade all calls to the /api/ to SSL/TLS. Furthermore, I had to increase the size of each request to a maximum of 100 Megabytes to account for any large files/notes that the user may upload and ensure that they get passed through.</p>
 <p>This is a very conventional and standardised way of running a dual-server website (Backend &amp; Frontend) on one machine with only one domain name. Additionally, it is very efficient and quick and taught me a lot about industry standards when it comes to deployment</p>
 <h2 id="nohup">Nohup</h2>
+<p>When deploying the app, I had to ssh into my server to be able to match the branch of my repository on the server with the most recent branch on GitHub. I then had to update my package dependencies and serve the frontend and backend. However, serving with the commands that I used in development would mean that the app would halt as soon as I exited my terminal window. </p>
+<h4 id="frontend-building">Frontend building</h4>
+<p>For the frontend, I simply updated packages with <code>npm i -g</code> and then I used <code>ng build</code> to build the app to a static set of HTML files that can be rendered using my nginx server. This is simple and did not require nohup.</p>
+<h4 id="backend-building">Backend building</h4>
+<p>To build the backend, I first had to enter the python environment using <code>source env/bin/activate</code>. Then I had to install pending dependencies using the command <code>pip install -r requirements.txt</code> which would pull the requirements from the file stored in the repo. To serve the application, I used the command: <br/></p>
+<p><code>nohup gunicorn -k uvicorn.workers.UvicornWorker main:app --workers 4 --bind 0.0.0.0:8000 &gt; backend.log 2&gt; backend.err &lt; /dev/null &amp;</code> <br/>
+<br/>
+Let's break this command down:
+<br/>
+1. <code>nohup</code> states that the command should become a background process and run without the requirement for an open terminal.  <br/>
+2. <code>gunicorn</code> is the ASGI Server that we are using that allows for workers <br/>
+3. <code>-k uvicorn.workers.UvicornWorker main:app --workers 4</code> Says that there should be 4  asynchronous worker processes. We can increase the number of workers by increasing the number shown in the command <br/>
+4. <code>--bind 0.0.0.0:8000</code> Binds the app to the server's public HTTP IP at port <code>8000</code> <br/>
+5. <code>&gt; backend.log 2&gt; backend.err</code> States the location of the error and log files <br/>
+6. <code>&lt; /dev/null &amp;</code> tells nohup to exit the terminal window automatically. <br/></p>
+<p><br/>
+This allows for a smooth, fluid and well-designed deployment process that prevents any cobbled-together solutions and taught me vast amounts about real-world developmental processes. This easily-deployable factor is furthered through the use of GitHub actions, which you can read about in the <code>Improvements</code> section.</p>
 <h2 id="encryption">Encryption</h2>
 <h2 id="jwt">JWT</h2>
 <h2 id="tokens">Tokens</h2></div>
