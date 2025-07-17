@@ -108,12 +108,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#jwt" class="nav-link">JWT</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            
-            <li class="nav-item" data-bs-level="2"><a href="#tokens" class="nav-link">Tokens</a>
+            <li class="nav-item" data-bs-level="2"><a href="#jwt-tokens" class="nav-link">JWT &amp; Tokens</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -238,8 +233,195 @@ Let's break this command down:
 <p><br/>
 This allows for a smooth, fluid and well-designed deployment process that prevents any cobbled-together solutions and taught me vast amounts about real-world developmental processes. This easily-deployable factor is furthered through the use of GitHub actions, which you can read about in the <code>Improvements</code> section.</p>
 <h2 id="encryption">Encryption</h2>
-<h2 id="jwt">JWT</h2>
-<h2 id="tokens">Tokens</h2></div>
+<p>Under 32(1) of the General Data Protection Regulation to implement appropriate technical and organisational measures to secure personal data, all applications that aim to follow these guidelines must, as appropriate: <br/></p>
+<ul>
+<li>
+<ol>
+<li>the pseudonymisation and encryption of personal data; <br/></li>
+</ol>
+</li>
+</ul>
+<p>As I want to align with these guidelines, I had to learn about the best practices for storing sensitive user information. The most sensitive piece of information is the password, so I had to learn how to encrypt it. Initially, I used a simple cipher:</p>
+<pre><code>def simple_encrypt(password, shift=3):
+    encrypted = &quot;&quot;
+    for char in password:
+        # Shift only printable characters
+        if char.isprintable():
+            encrypted += chr((ord(char) + shift) % 126)
+        else:
+            encrypted += char
+    return encrypted
+
+def simple_decrypt(encrypted, shift=3):
+    decrypted = &quot;&quot;
+    for char in encrypted:
+        if char.isprintable():
+            decrypted += chr((ord(char) - shift) % 126)
+        else:
+            decrypted += char
+    return decrypted
+
+# Example usage
+password = &quot;MySecret123!&quot;
+encrypted = simple_encrypt(password)
+decrypted = simple_decrypt(encrypted)
+
+Result
+('MySecret123!', 'P|Vhfuhw456$', 'MySecret123!')
+</code></pre>
+<p>However, this did not have a high-degree of security and could easily be cracked by modern systems. I then chose a more modern approach, involving cryptography and 256-bit algorithms.
+ All passwords are encrypted before being stored in the backend. They are encrypted using Passlib's <code>CryptContext</code> module with 'bcrypt' as the schema. The password is encrypted with the following code:</p>
+<pre><code>from pydantic import BaseModel # Import module
+pwd_context = CryptContext(schemes=[&quot;bcrypt&quot;], deprecated=&quot;auto&quot;) # Identify the schema used 
+def hash_password(password): # Take a plaintext password &amp; convert it to ciphertext
+
+    return pwd_context.hash(password)
+</code></pre>
+<p>This will encrypt our password. It is extremely secure as each password is non-reversible. This results in the same input string having a variable output hash as the starting 'salt' used by the algorithm will be different. For example, an input password of <code>1234</code> could result in: <br/>
+- $2b$12$zProG7RawgHpdXZ9RfxYZ.pcwZy4N29C6mRzBb8yAFvoHc5TSSyZC <br/>
+- $2b$12$0DPNbWZDAX5fJl4pyBHnIuWiLk.2w/rxU/MnuKFznmjouUMjFxW5. <br/>
+- $2b$12$U6PDFiGrqooLxsnHJ7X9gehpzH3tLiI./BH8oj3HejMSyZvGHPneC <br/>
+- $2b$12$YJK4L0S8pcFKokWUYqf1VuDtjxy.KptvvBN9VTJIvTPTuwc36KwAe <br/>
+- $2b$12$MWwHq8PHskJqF2EoGOI60..J92SVyjD5FHVc4Ugbv7ZnD10Wso6yO <br/>
+- $2b$12$r5qvt.4ik//TSFaVWxWZ3uFGdmUXJL35.FXeeb2uDiWSQSZYQWv0i <br/>
+With there being a large number of potential passwords based on the starting 'salt'.</p>
+<p>To verify the value of our password, we do not reverse the hash. This is because reversing the hash is impossible. Instead, we use an inbuilt function that compares the plain-text to the hashed cipher-text. This functionality is used when authenticating a user during login and is done as such:</p>
+<pre><code>from pydantic import BaseModel # Import module
+pwd_context = CryptContext(schemes=[&quot;bcrypt&quot;], deprecated=&quot;auto&quot;) # Identify the schema used 
+def verify_password(unhashed, hashed): 
+
+    return pwd_context.verify(unhashed, hashed) # Returns a boolean
+</code></pre>
+<p>This function compares the original 'salt' and 'work factor' (Number of encryption iterations) and calculates whether the hash could have been derived from this input. If the algorithm deems it possible, then a boolean value of <code>True</code> is returned, otherwise the function returns <code>False</code>.</p>
+<h2 id="jwt-tokens">JWT &amp; Tokens</h2>
+<p>JWT (JSON Web-Tokens) are vital to creating fluidity in the user web experience. Without them, the user would be required to re-login to their account every time they reloaded the page, there would be no way to discern user actions between API calls and the app would be vulnerable to various forms of exploitation due to the lack of account validation. I implemented JWT &amp; tokens to fix this. When the frontend needs to make any request to the backend, it needs to provide a token. This token is valid for 7 days and stores the <code>name</code>, <code>email</code> and <code>id</code> of the user (student) that is currently logged in. <br/></p>
+<p>When a user attempts to login, the details they input are checked against the database. If the email and password inputted align with an email and password from the database, a token is created and sent to the frontend. The token is created using the code:</p>
+<pre><code>def get_user_token(student: Student):
+    to_encode = {
+        'details' : {'name': student.name, 'email': student.email, 'id': student.id},
+        'expiry' : str(datetime.utcnow() + timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    }
+    return jwt.encode(to_encode, SECRET_KEY, algorithm = ALGORITHM)
+</code></pre>
+<p>Where <code>SECRET_KEY</code> is a 256-bit custom code that is used for encryption and the algorithm is HS256. This token is then stored in the user's browser data. As a result of this, the user will not have to log in to the website on every occurrence of accessing the website. The frontend injects this token into every request as shown by the code: </p>
+<pre><code>@Injectable()
+export class CookieInterceptor implements HttpInterceptor {
+
+    private platformId = inject(PLATFORM_ID);
+    intercept(request: HttpRequest&lt;unknown&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;unknown&gt;&gt; { // Intercepts an incoming request
+
+        let token: string | undefined;
+        if (isPlatformBrowser(this.platformId)) {
+        token = document.cookie.split(&quot;; &quot;).find((row) =&gt; row.startsWith(&quot;token=&quot;))?.split(&quot;=&quot;)[1];
+    } // Extracts the token from the web-browser
+
+        const modifiedRequest = request.clone({
+            withCredentials: true,
+            setHeaders: token ? { 'token': token } : {} // Adds the token to the request    
+        });
+
+    return next.handle(modifiedRequest); // Sends the request to the API
+    }
+
+}
+</code></pre>
+<p>Once the backend receives this token, it then verifies the token in every single function before even executing the intended request of the method call. This is done through the code: </p>
+<pre><code>@app.post(&quot;/api/function_name&quot;)
+async def function_name(request: Request):
+    token_res = validate_student(request.headers.get('token')) # Runs a backend function to validate the token by extracting the user details and checking the expiry of the token
+    if token_res == False:
+
+        return JSONResponse(status_code=401, content={&quot;message&quot;: &quot;Invalid token&quot;}) # Prevents any functions if the token is invalid
+    else:
+
+        # Execute the intended code here
+</code></pre>
+<p>To validate the token, the code firsts calls the function <code>validate_student()</code>:</p>
+<pre><code>def validate_student(token):
+    try:
+
+        res = get_student_from_token(token)
+        if res == &quot;Token Expired&quot;: # Checks if the token is past its expiry date
+
+            return False
+        else:
+
+            # Returns details in the form of a list
+            return [res['name'], res['email'], res['id']]
+            # If the token is invalid, return False
+    except InvalidTokenError: 
+
+        return False
+
+    # If the token cannot be decoded, return False
+
+    except InvalidSignatureError: # Checks if the user has tried to use token injection, resulting in an invalid token
+
+        return False
+</code></pre>
+<p>To get the <code>res</code> variable, our code initially decodes the token using the <code>get_student_from_token(token: str)</code> function:</p>
+<pre><code>def get_student_from_token(token):
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM])
+    expiry = payload.get('expiry')
+    if datetime.utcnow() &gt;= datetime.strptime(expiry, '%Y-%m-%d %H:%M:%S.%f'): # Compares the expiry date to the current date based on UCT
+
+        return &quot;Token Expired&quot;
+    else:
+
+        return payload.get('details') # Returns the details as a dictionary of the name, email and UID
+</code></pre>
+<p>This means that an expired or invalid token will immediately be rejected but a valid and correct token will be decoded. The app then performs all of its functions based on this data, allowing the app to extract the user's notes based on the <code>OWNER_EMAIL</code> property of each file, ensuring the privacy of user data and maintains the user experience. </p>
+<p>If the app returns a <code>401</code> error due to a bad token, the frontend intercepts this error and redirects the user to a login/sign-up page, as shown in the code: </p>
+<pre><code>@Injectable()
+export class ErrorInterceptor implements HttpInterceptor {
+    constructor(private router: Router, private route: ActivatedRoute) {}
+    getChildRoute(route: ActivatedRoute): ActivatedRoute {  
+        while (route.firstChild) {
+
+            route = route.firstChild;
+        }
+
+        return route;
+    }
+
+    intercept(request: HttpRequest&lt;any&gt;, next: HttpHandler): Observable&lt;HttpEvent&lt;any&gt;&gt; {
+
+        const modifiedRequest = request.clone({ // Clones any incoming requests
+
+            headers: request.headers.set('X-Requested-With', 'XMLHttpRequest'),
+            withCredentials: true
+        });
+
+        return next.handle(modifiedRequest).pipe( tap(() =&gt; {}, (err: any) =&gt; {
+
+
+            if (err instanceof HttpErrorResponse) { // Checks if we have received an error
+
+                if (err.status != 401 ) {
+
+                    return;
+                }
+
+                this.router.navigate(['/login']); // Prevents the request from going through and redirects to login page instead
+
+            }
+        }));
+
+    }
+
+}
+</code></pre>
+<p>This all ensures that the user can use the app easily, as they do not have to specify their ID when trying to use the app's functions whilst also preventing bad actors from accessing user data.</p>
+<p>There is one exception to each API call having a token requirements. This is the <code>cloud_check()</code> function and is used by me to check if the API is responding to API calls. It is a simple <code>get</code> API call: </p>
+<pre><code>@app.get(&quot;/api/cloud_check&quot;)
+async def cloud_check():
+
+    return True
+</code></pre>
+<p>And was initially used by my service provider to notify me if my API goes down. This is the only potential vulnerability evident to me, and is more dependent on my provider's (Linode) protection to unauthorised IPv6 &amp; IPv4 calls to the server. When calling the method, it should return the following page:</p>
+<p><img alt="Cloud Check" src="https://storage.googleapis.com/studdy-buddy-docs-image-hosting/Cloud%20Check%20API%20Call%20example.png" /></p></div>
             </div>
         </div>
 
